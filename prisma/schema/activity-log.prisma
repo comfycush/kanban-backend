@@ -1,0 +1,24 @@
+enum ActivityType {
+  CARD_CREATED
+  CARD_MOVED
+  CARD_UPDATED
+  MESSAGE_SENT
+}
+
+model ActivityLog {
+  id        String       @id @default(uuid())
+  orgId     String
+  userId    String?
+  cardId    String?
+  type      ActivityType
+  data      Json
+  createdAt DateTime     @default(now())
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User?        @relation(fields: [userId], references: [id])
+  card Card?        @relation(fields: [cardId], references: [id])
+
+  @@index([orgId])
+  @@index([cardId])
+  @@index([createdAt])
+}

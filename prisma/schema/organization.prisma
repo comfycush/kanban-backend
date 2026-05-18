@@ -1,0 +1,10 @@
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  memberships Membership[]
+  boards      Board[]
+  messages    Message[]
+  activities  ActivityLog[]
+}

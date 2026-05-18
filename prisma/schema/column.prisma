@@ -1,0 +1,13 @@
+model Column {
+  id        String   @id @default(uuid())
+  name      String
+  boardId   String
+  order     Int
+  createdAt DateTime @default(now())
+
+  board  Board   @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards  Card[]
+
+  @@unique([boardId, order]) // enforce ordering per board
+  @@index([boardId])
+}

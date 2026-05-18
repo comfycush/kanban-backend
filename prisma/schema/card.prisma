@@ -1,0 +1,31 @@
+model Card {
+  id           String   @id @default(uuid())
+  title        String
+  description  String?
+  columnId     String
+  order        Int
+  assignedToId String?
+  createdAt    DateTime @default(now())
+
+  column     Column @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  assignedTo User?  @relation(fields: [assignedToId], references: [id])
+
+  attachments Attachment[]
+  activities  ActivityLog[]
+
+  @@unique([columnId, order])
+  @@index([columnId])
+  @@index([assignedToId])
+}
+
+model Attachment {
+  id        String   @id @default(uuid())
+  url       String
+  fileName  String   @default("")
+  cardId    String
+  createdAt DateTime @default(now())
+
+  card Card @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+}

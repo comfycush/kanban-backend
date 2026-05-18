@@ -1,0 +1,11 @@
+model Board {
+  id        String   @id @default(uuid())
+  name      String
+  orgId     String
+  createdAt DateTime @default(now())
+
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  columns Column[]
+
+  @@index([orgId])
+}

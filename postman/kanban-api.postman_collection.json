@@ -1,0 +1,800 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Kanban API",
+    "description": "Multi-tenant Kanban backend (HTTP). Import this file into Postman (Import → File).\n\n**Setup**\n1. Set collection variables: `baseUrl` (e.g. `http://localhost:3000`), and optionally `orgId`, `boardId`, `columnId`, `cardId` from list responses. For attachment flows, optionally set `attachmentId` manually or rely on **Upload attachment** Tests (saved from `data.id`).\n2. **Register** or **Login** — the `Tests` script saves `accessToken` from the response into a collection variable.\n3. Other requests use **Bearer** auth with that token. **Memberships** — `GET /memberships/me` returns all org memberships for the JWT user; `GET /memberships/:orgId` returns your role in one org. Org scoping for other routes is inferred from path params (`orgId`, `boardId`, `cardId`, etc.) by the server’s `RolesGuard`.\n\n**OpenAPI** — Interactive docs: `{{baseUrl}}/api` (Swagger UI).\n\n**WebSockets** (not in this collection): `board` and `chat` namespaces — see project README for `joinBoard` / `joinOrg`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "accessToken", "value": "" },
+    { "key": "orgId", "value": "" },
+    { "key": "boardId", "value": "" },
+    { "key": "columnId", "value": "" },
+    { "key": "cardId", "value": "" },
+    { "key": "attachmentId", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "notificationId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/",
+            "description": "Returns welcome string (e.g. `Hello World!`)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201 || pm.response.code === 200) {",
+                  "  try {",
+                  "    const j = pm.response.json();",
+                  "    if (j && j.data.accessToken) pm.collectionVariables.set('accessToken', j.data.accessToken);",
+                  "  } catch (e) {}",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password12\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Create user; response includes `accessToken`. Token is auto-saved to `accessToken`."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  try {",
+                  "    const j = pm.response.json();",
+                  "    if (j && j.data.accessToken) pm.collectionVariables.set('accessToken', j.data.accessToken);",
+                  "  } catch (e) {}",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password12\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Returns JWT; `accessToken` is auto-saved for Bearer requests."
+          }
+        },
+        {
+          "name": "Current user (me)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Memberships",
+      "item": [
+        {
+          "name": "List my memberships",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/memberships/me",
+            "description": "Returns every membership for the user implied by `accessToken`, each with nested `org` (same envelope shape as listing orgs)."
+          }
+        },
+        {
+          "name": "Get my membership in org",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/memberships/{{orgId}}",
+            "description": "Returns your membership row for collection variable `orgId` (includes `role` and nested `org`). 404 if you are not a member."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        {
+          "name": "Create organization",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My org\"\n}"
+            },
+            "url": "{{baseUrl}}/orgs"
+          }
+        },
+        {
+          "name": "List my organizations",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orgs"
+          }
+        },
+        {
+          "name": "List organization members",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orgs/{{orgId}}/members",
+            "description": "All memberships in the org with nested `user` (`id`, `email`). Any org member may call."
+          }
+        },
+        {
+          "name": "Get organization",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orgs/{{orgId}}"
+          }
+        },
+        {
+          "name": "Invite user (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"member@example.com\",\n  \"role\": \"MEMBER\"\n}"
+            },
+            "url": "{{baseUrl}}/orgs/{{orgId}}/invite",
+            "description": "Invited user must already be registered. `role`: `MEMBER` or `ADMIN` (optional)."
+          }
+        },
+        {
+          "name": "Update member role (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"ADMIN\"\n}"
+            },
+            "url": "{{baseUrl}}/orgs/{{orgId}}/members/{{userId}}",
+            "description": "`role`: `MEMBER` or `ADMIN`. Cannot demote the last admin to `MEMBER` (409)."
+          }
+        },
+        {
+          "name": "Remove member (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/orgs/{{orgId}}/members/{{userId}}"
+          }
+        },
+        {
+          "name": "Delete organization (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/orgs/{{orgId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Boards",
+      "item": [
+        {
+          "name": "Create board (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sprint 1\"\n}"
+            },
+            "url": "{{baseUrl}}/orgs/{{orgId}}/boards"
+          }
+        },
+        {
+          "name": "List boards",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orgs/{{orgId}}/boards"
+          }
+        },
+        {
+          "name": "Get board (with columns and cards)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/boards/{{boardId}}",
+            "description": "Org context is resolved from `boardId`."
+          }
+        },
+        {
+          "name": "Update board (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sprint 2\"\n}"
+            },
+            "url": "{{baseUrl}}/boards/{{boardId}}"
+          }
+        },
+        {
+          "name": "Delete board (admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/boards/{{boardId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Columns",
+      "item": [
+        {
+          "name": "Create column",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"To do\"\n}"
+            },
+            "url": "{{baseUrl}}/boards/{{boardId}}/columns"
+          }
+        },
+        {
+          "name": "List columns",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/boards/{{boardId}}/columns"
+          }
+        },
+        {
+          "name": "Reorder columns",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"columnIds\": [\n    \"uuid-col-1\",\n    \"uuid-col-2\"\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/boards/{{boardId}}/columns/reorder",
+            "description": "Must list every column id on the board exactly once."
+          }
+        },
+        {
+          "name": "Update column",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"In progress\"\n}"
+            },
+            "url": "{{baseUrl}}/boards/{{boardId}}/columns/{{columnId}}"
+          }
+        },
+        {
+          "name": "Delete column",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/boards/{{boardId}}/columns/{{columnId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cards",
+      "item": [
+        {
+          "name": "Create card",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Task title\",\n  \"description\": \"Optional details\",\n  \"assignedToId\": null\n}"
+            },
+            "url": "{{baseUrl}}/columns/{{columnId}}/cards"
+          }
+        },
+        {
+          "name": "List cards in column",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/columns/{{columnId}}/cards"
+          }
+        },
+        {
+          "name": "Get card",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/cards/{{cardId}}"
+          }
+        },
+        {
+          "name": "Update card",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated title\",\n  \"description\": null,\n  \"assignedToId\": null\n}"
+            },
+            "url": "{{baseUrl}}/cards/{{cardId}}",
+            "description": "Omit or set `assignedToId` to unassign; send null to clear."
+          }
+        },
+        {
+          "name": "Move card",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetColumnId\": \"{{columnId}}\",\n  \"newOrder\": 0\n}"
+            },
+            "url": "{{baseUrl}}/cards/{{cardId}}/move",
+            "description": "Target column must be on the same board. `newOrder` is 0-based index in target column."
+          }
+        },
+        {
+          "name": "Delete card",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/cards/{{cardId}}"
+          }
+        },
+        {
+          "name": "List attachments",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/cards/{{cardId}}/attachments",
+            "description": "`data` is an array of `{ id, url, cardId, createdAt }` (oldest first)."
+          }
+        },
+        {
+          "name": "Upload attachment (multipart)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  try {",
+                  "    const j = pm.response.json();",
+                  "    if (j && j.data && j.data.id) pm.collectionVariables.set('attachmentId', j.data.id);",
+                  "  } catch (e) {}",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Select a local file in Postman; max 20MB."
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/cards/{{cardId}}/attachments",
+            "description": "On success, `attachmentId` is saved from `data.id` for **Delete attachment**."
+          }
+        },
+        {
+          "name": "Delete attachment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/cards/{{cardId}}/attachments/{{attachmentId}}",
+            "description": "Uses `attachmentId` (from **Upload attachment** Tests or copy from **List attachments** / Get card)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "Post message",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Hello team\"\n}"
+            },
+            "url": "{{baseUrl}}/orgs/{{orgId}}/messages"
+          }
+        },
+        {
+          "name": "List messages",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{orgId}}/messages?skip=0&take=50",
+              "query": [
+                { "key": "skip", "value": "0" },
+                { "key": "take", "value": "50" }
+              ]
+            },
+            "description": "Query: `skip` (default 0), `take` (1–100, default 50)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "List notifications",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/notifications?unreadOnly=false&skip=0&take=20",
+              "query": [
+                { "key": "unreadOnly", "value": "false" },
+                { "key": "skip", "value": "0" },
+                { "key": "take", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Mark notification read",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/notifications/{{notificationId}}/read"
+          }
+        },
+        {
+          "name": "Mark all notifications read",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/notifications/read-all"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Activity logs",
+      "item": [
+        {
+          "name": "List org activity",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/orgs/{{orgId}}/activity?skip=0&take=50",
+              "query": [
+                { "key": "skip", "value": "0" },
+                { "key": "take", "value": "50" }
+              ]
+            },
+            "description": "`take` max 200."
+          }
+        },
+        {
+          "name": "List card activity",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                { "key": "token", "value": "{{accessToken}}", "type": "string" }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cards/{{cardId}}/activity?skip=0&take=50",
+              "query": [
+                { "key": "skip", "value": "0" },
+                { "key": "take", "value": "50" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
