@@ -19,15 +19,15 @@ export class MessagesService {
   async create(
     orgId: string,
     userId: string,
-    userEmail: string,
+    actorLabel: string,
     dto: CreateMessageDto,
   ) {
     const message = await this.prisma.message.create({
       data: { orgId, userId, content: dto.content },
-      include: { user: { select: { id: true, email: true } } },
+      include: { user: { select: { id: true, email: true, fullName: true } } },
     });
     const logData: Prisma.InputJsonValue = {
-      summary: `${userEmail} sent a message`,
+      summary: `${actorLabel} sent a message`,
     };
     await this.activity.log(orgId, ActivityType.MESSAGE_SENT, logData, {
       userId,
@@ -46,7 +46,9 @@ export class MessagesService {
         orderBy: { createdAt: 'desc' },
         skip,
         take,
-        include: { user: { select: { id: true, email: true } } },
+        include: {
+          user: { select: { id: true, email: true, fullName: true } },
+        },
       }),
       this.prisma.message.count({ where }),
     ]);

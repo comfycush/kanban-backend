@@ -72,7 +72,7 @@ export class CardsService {
         column: {
           include: { board: true },
         },
-        assignedTo: { select: { id: true, email: true } },
+        assignedTo: { select: { id: true, email: true, fullName: true } },
         attachments: true,
       },
     });
@@ -169,7 +169,9 @@ export class CardsService {
       this.prisma.card.findMany({
         where: { columnId },
         orderBy: { order: 'asc' },
-        include: { assignedTo: { select: { id: true, email: true } } },
+        include: {
+          assignedTo: { select: { id: true, email: true, fullName: true } },
+        },
       }),
     );
   }
@@ -218,7 +220,7 @@ export class CardsService {
       },
       include: {
         column: { include: { board: true } },
-        assignedTo: { select: { id: true, email: true } },
+        assignedTo: { select: { id: true, email: true, fullName: true } },
         attachments: true,
       },
     });

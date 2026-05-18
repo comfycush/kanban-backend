@@ -32,7 +32,7 @@ export class OrgsService {
         where: { id: org.id },
         include: {
           memberships: {
-            include: { user: { select: { id: true, email: true } } },
+            include: { user: { select: { id: true, email: true, fullName: true } } },
           },
         },
       });
@@ -55,7 +55,7 @@ export class OrgsService {
   listMembers(orgId: string) {
     return this.prisma.membership.findMany({
       where: { orgId },
-      include: { user: { select: { id: true, email: true } } },
+      include: { user: { select: { id: true, email: true, fullName: true } } },
       orderBy: { createdAt: 'asc' },
     });
   }
@@ -84,7 +84,7 @@ export class OrgsService {
         userId: user.id,
         role: dto.role ?? Role.MEMBER,
       },
-      include: { user: { select: { id: true, email: true } } },
+      include: { user: { select: { id: true, email: true, fullName: true } } },
     });
     await this.notifications.create(user.id, NotificationType.INVITE, {
       orgId: org.id,
@@ -135,7 +135,7 @@ export class OrgsService {
     return this.prisma.membership.update({
       where: { userId_orgId: { userId: targetUserId, orgId } },
       data: { role: dto.role },
-      include: { user: { select: { id: true, email: true } } },
+      include: { user: { select: { id: true, email: true, fullName: true } } },
     });
   }
 

@@ -87,7 +87,7 @@ export class ChatGateway implements OnGatewayConnection {
     }
     const user = await this.prisma.user.findUnique({
       where: { id: sub },
-      select: { id: true, email: true },
+      select: { id: true, email: true, fullName: true },
     });
     if (!user) {
       return { ok: false, error: 'User not found' };
@@ -95,7 +95,7 @@ export class ChatGateway implements OnGatewayConnection {
     const message = await this.messages.create(
       data.orgId,
       user.id,
-      user.email,
+      user.fullName.trim() || user.email,
       { content: data.content },
     );
     return { ok: true, message };
@@ -109,7 +109,7 @@ export class ChatGateway implements OnGatewayConnection {
       orgId: string;
       userId: string;
       createdAt: Date;
-      user: { id: string; email: string };
+      user: { id: string; email: string; fullName: string };
     },
   ) {
     console.log({ test: this.orgRoom(orgId) });
