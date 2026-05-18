@@ -30,7 +30,7 @@ export class ActivityLogsService {
     const take = query.take ?? 50;
     const where = { orgId };
     const include = {
-      user: { select: { id: true, email: true } },
+      user: { select: { id: true, email: true, fullName: true } },
       card: { select: { id: true, title: true } },
     };
     const [items, total] = await this.prisma.$transaction([
@@ -51,7 +51,7 @@ export class ActivityLogsService {
     const take = query.take ?? 50;
     const where = { cardId };
     const include = {
-      user: { select: { id: true, email: true } },
+      user: { select: { id: true, email: true, fullName: true } },
       card: { select: { id: true, title: true } },
     };
     const [items, total] = await this.prisma.$transaction([

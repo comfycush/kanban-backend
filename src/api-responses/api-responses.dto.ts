@@ -6,11 +6,13 @@ import { ActivityType, NotificationType, Role } from '@prisma/client';
 export class UserRefDto {
   @ApiProperty() id: string;
   @ApiProperty() email: string;
+  @ApiProperty() fullName: string;
 }
 
 export class UserPublicDto {
   @ApiProperty() id: string;
   @ApiProperty() email: string;
+  @ApiProperty() fullName: string;
   @ApiProperty() createdAt: Date;
 }
 

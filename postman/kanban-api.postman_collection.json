@@ -60,7 +60,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password12\"\n}"
+              "raw": "{\n  \"fullName\": \"Jane Doe\",\n  \"email\": \"user@example.com\",\n  \"password\": \"password12\"\n}"
             },
             "url": "{{baseUrl}}/auth/register",
             "description": "Create user; response includes `accessToken`. Token is auto-saved to `accessToken`."

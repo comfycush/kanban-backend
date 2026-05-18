@@ -44,7 +44,12 @@ export class MessagesController {
     @CurrentUser() user: Express.User,
     @Body() dto: CreateMessageDto,
   ) {
-    return this.messages.create(orgId, user.id, user.email, dto);
+    return this.messages.create(
+      orgId,
+      user.id,
+      user.fullName.trim() || user.email,
+      dto,
+    );
   }
 
   @Get('orgs/:orgId/messages')
