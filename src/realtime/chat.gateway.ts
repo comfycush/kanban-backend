@@ -70,7 +70,6 @@ export class ChatGateway implements OnGatewayConnection {
       return { ok: false, error: 'Forbidden' };
     }
     void client.join(this.orgRoom(data.orgId));
-    console.log('joined org room', { ok: true, orgId: data.orgId });
 
     return { ok: true, orgId: data.orgId };
   }
@@ -112,8 +111,6 @@ export class ChatGateway implements OnGatewayConnection {
       user: { id: string; email: string; fullName: string };
     },
   ) {
-    console.log({ test: this.orgRoom(orgId) });
-
     this.server.to(this.orgRoom(orgId)).emit('chat', {
       type: 'message:new',
       message,
