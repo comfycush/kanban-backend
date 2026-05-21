@@ -1,8 +1,7 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ActivityType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ActivityLogsService } from '../activity-logs/activity-logs.service';
-import { ChatGateway } from '../realtime/chat.gateway';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { MessageFiltersDto } from './dto/message-filters.dto';
 import { toPaginatedList } from '../common/http/paginated-list';
@@ -12,8 +11,6 @@ export class MessagesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly activity: ActivityLogsService,
-    @Inject(forwardRef(() => ChatGateway))
-    private readonly chatGateway: ChatGateway,
   ) {}
 
   async create(
@@ -32,7 +29,6 @@ export class MessagesService {
     await this.activity.log(orgId, ActivityType.MESSAGE_SENT, logData, {
       userId,
     });
-    this.chatGateway.emitNewMessage(orgId, message);
     return message;
   }
 

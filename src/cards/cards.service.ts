@@ -7,7 +7,6 @@ import { ActivityType, NotificationType, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ActivityLogsService } from '../activity-logs/activity-logs.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { BoardGateway } from '../realtime/board.gateway';
 import { EmailOutbox } from '../email/email-outbox.service';
 import { CreateCardDto } from './dto/create-card.dto';
 import { UpdateCardDto } from './dto/update-card.dto';
@@ -19,7 +18,6 @@ export class CardsService {
     private readonly prisma: PrismaService,
     private readonly activity: ActivityLogsService,
     private readonly notifications: NotificationsService,
-    private readonly boardGateway: BoardGateway,
     private readonly emailOutbox: EmailOutbox,
   ) {}
 
@@ -157,10 +155,6 @@ export class CardsService {
       userId,
       cardId: card.id,
     });
-    this.boardGateway.emitCardEvent(card.column.boardId, {
-      type: 'card:created',
-      card: await this.getCardInOrg(card.id, orgId),
-    });
     return card;
   }
 
@@ -232,10 +226,6 @@ export class CardsService {
       userId,
       cardId: card.id,
     });
-    this.boardGateway.emitCardEvent(card.column.boardId, {
-      type: 'card:updated',
-      card: await this.getCardInOrg(card.id, orgId),
-    });
     return card;
   }
 
@@ -262,7 +252,6 @@ export class CardsService {
 
     const fromColumnId = full.columnId;
     const toColumnId = dto.targetColumnId;
-    const boardId = full.column.boardId;
 
     if (fromColumnId === toColumnId) {
       const ids = (
@@ -315,38 +304,24 @@ export class CardsService {
       cardId,
     });
 
-    this.boardGateway.emitCardEvent(boardId, {
-      type: 'card:moved',
-      cardId,
-      orgId,
-    });
     return this.getCardInOrg(cardId, orgId);
   }
 
   async delete(cardId: string, orgId: string) {
     const card = await this.getCardInOrg(cardId, orgId);
-    const boardId = card.column.boardId;
-    return this.prisma
-      .$transaction(async (tx) => {
-        const colId = card.columnId;
-        await tx.card.delete({ where: { id: cardId } });
-        const rest = await tx.card.findMany({
-          where: { columnId: colId },
-          orderBy: { order: 'asc' },
-          select: { id: true },
-        });
-        await this.bulkReorder(
-          tx,
-          colId,
-          rest.map((c) => c.id),
-        );
-      })
-      .then(() => {
-        this.boardGateway.emitCardEvent(boardId, {
-          type: 'card:deleted',
-          cardId,
-          orgId,
-        });
+    return this.prisma.$transaction(async (tx) => {
+      const colId = card.columnId;
+      await tx.card.delete({ where: { id: cardId } });
+      const rest = await tx.card.findMany({
+        where: { columnId: colId },
+        orderBy: { order: 'asc' },
+        select: { id: true },
       });
+      await this.bulkReorder(
+        tx,
+        colId,
+        rest.map((c) => c.id),
+      );
+    });
   }
 }
