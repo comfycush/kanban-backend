@@ -224,6 +224,10 @@ export class NotificationItemDto {
   type: NotificationType;
   @ApiProperty({ type: 'object', additionalProperties: true })
   data: object;
+  @ApiProperty({
+    description: 'Human-readable notification text derived from type and data',
+  })
+  message: string;
   @ApiProperty() read: boolean;
   @ApiProperty() createdAt: Date;
 }
