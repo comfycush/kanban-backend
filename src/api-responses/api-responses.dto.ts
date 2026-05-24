@@ -203,18 +203,6 @@ export class CardDetailResponseDto {
   attachments: AttachmentDto[];
 }
 
-// --- Message ---
-
-export class MessageWithUserDto {
-  @ApiProperty() id: string;
-  @ApiProperty() content: string;
-  @ApiProperty() userId: string;
-  @ApiProperty() orgId: string;
-  @ApiProperty() createdAt: Date;
-  @ApiProperty({ type: () => UserRefDto })
-  user: UserRefDto;
-}
-
 // --- Notification ---
 
 export class NotificationItemDto {
@@ -224,6 +212,10 @@ export class NotificationItemDto {
   type: NotificationType;
   @ApiProperty({ type: 'object', additionalProperties: true })
   data: object;
+  @ApiProperty({
+    description: 'Human-readable notification text derived from type and data',
+  })
+  message: string;
   @ApiProperty() read: boolean;
   @ApiProperty() createdAt: Date;
 }

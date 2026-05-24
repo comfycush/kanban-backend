@@ -37,13 +37,5 @@ export async function resolveOrgIdFromParams(
     return card?.column.board.orgId ?? null;
   }
 
-  if (params.messageId) {
-    const message = await prisma.message.findUnique({
-      where: { id: params.messageId },
-      select: { orgId: true },
-    });
-    return message?.orgId ?? null;
-  }
-
   return null;
 }

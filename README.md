@@ -1,118 +1,167 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Kanban Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Multi-tenant Kanban API built with [NestJS](https://nestjs.com). Organizations, boards, columns, cards, activity logs, S3 attachments, in-app notifications, and a BullMQ email queue.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Features
 
-## Description
+- **Auth** — register, login, JWT bearer tokens
+- **Organizations** — create orgs, invite members, role-based access (`ADMIN`, `MEMBER`)
+- **Boards & columns** — CRUD, column reorder
+- **Cards** — CRUD, move between columns, attachments (S3, max 20 MB)
+- **Activity logs** — per org or per card
+- **Notifications** — in-app list, mark read
+- **Email queue** — BullMQ worker (stub; wire SMTP/SES in `EmailProcessor`)
 
-Multi-tenant Kanban API: organizations, boards, columns, cards, org chat, activity logs, S3 attachments, in-app notifications, BullMQ email queue, and Socket.IO (`/board`, `/chat`).
+## Tech stack
 
-### Environment variables
+- NestJS 11, TypeScript, Prisma 7 (PostgreSQL)
+- JWT auth (Passport)
+- Redis + BullMQ (email jobs)
+- AWS S3 (or S3-compatible storage, e.g. MinIO)
+- Swagger UI at `/api`
 
-| Variable | Purpose |
-|----------|---------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `JWT_SECRET` | JWT signing secret |
-| `JWT_EXPIRES_IN` | Optional (default `7d`) |
-| `REDIS_URL` | Redis for BullMQ email queue (default `redis://127.0.0.1:6379`) |
-| `S3_BUCKET` | S3 bucket name |
-| `S3_REGION` | Optional (default `us-east-1`) |
-| `S3_ENDPOINT` | Optional (MinIO / S3-compatible custom endpoint) |
-| `S3_ACCESS_KEY` / `S3_SECRET_KEY` | S3 credentials |
-| `S3_PUBLIC_BASE_URL` | Base URL used to build public file URLs: `{S3_PUBLIC_BASE_URL}/{key}` |
-| `PORT` | HTTP port (default `3000`) |
+## Prerequisites
 
-### WebSocket clients
+- Node.js 20+
+- Yarn
+- PostgreSQL
+- Redis (for BullMQ)
+- S3-compatible object storage (for card attachments)
 
-- **Board** (`/board` namespace): connect with JWT as `auth: { token }` or `Authorization: Bearer` header, emit `joinBoard` with `{ boardId }` to receive `board` events.
-- **Chat** (`/chat` namespace): same auth, `joinOrg` with `{ orgId }`, or `sendMessage` with `{ orgId, content }`.
-
-## Project setup
+## Getting started
 
 ```bash
-$ yarn install
+yarn install
 ```
 
-## Compile and run the project
+Create a `.env` file in the project root (see [Environment variables](#environment-variables)).
+
+Apply the database schema:
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+npx prisma migrate dev
+# or, for local prototyping without migrations:
+# npx prisma db push
 ```
 
-## Run tests
+Start the API:
 
 ```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+yarn start:dev
 ```
 
-## Deployment
+The server listens on `http://localhost:3000` by default (`PORT` overrides).
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## Environment variables
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `DATABASE_URL` | yes | PostgreSQL connection string |
+| `JWT_SECRET` | yes | JWT signing secret |
+| `JWT_EXPIRES_IN` | no | Token lifetime (default `7d`) |
+| `REDIS_URL` | no | Redis for BullMQ (default `redis://127.0.0.1:6379`) |
+| `S3_BUCKET` | yes | S3 bucket name |
+| `S3_ACCESS_KEY` | yes | S3 access key |
+| `S3_SECRET_KEY` | yes | S3 secret key |
+| `S3_PUBLIC_BASE_URL` | yes | Base URL for public file links (`{S3_PUBLIC_BASE_URL}/{key}`) |
+| `S3_REGION` | no | AWS region (default `us-east-1`) |
+| `S3_ENDPOINT` | no | Custom endpoint for MinIO / S3-compatible storage |
+| `PORT` | no | HTTP port (default `3000`) |
 
-```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+Example:
+
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/kanban
+JWT_SECRET=change-me-in-production
+REDIS_URL=redis://127.0.0.1:6379
+S3_BUCKET=kanban-uploads
+S3_ACCESS_KEY=minioadmin
+S3_SECRET_KEY=minioadmin
+S3_ENDPOINT=http://localhost:9000
+S3_PUBLIC_BASE_URL=http://localhost:9000/kanban-uploads
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## API
 
-## Resources
+### Documentation
 
-Check out a few resources that may come in handy when working with NestJS:
+- **Swagger UI** — [http://localhost:3000/api](http://localhost:3000/api)
+- **Postman** — import [`postman/kanban-api.postman_collection.json`](postman/kanban-api.postman_collection.json)
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Register or log in to obtain an `accessToken`, then send `Authorization: Bearer <token>` on protected routes.
 
-## Support
+### Response envelope
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Every HTTP response uses the same shape:
 
-## Stay in touch
+```json
+{
+  "data": { },
+  "meta": {
+    "timestamp": "2026-05-21T12:00:00.000Z",
+    "success": true,
+    "message": "OK",
+    "status": 200,
+    "pagination": null
+  }
+}
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+List endpoints include `meta.pagination` with `page`, `limit`, `total`, and `totalPages`. Errors use the same envelope with `data: null` and `success: false`.
+
+### Authorization
+
+Org-scoped routes use `RolesGuard`. The server resolves the organization from path params (`orgId`, `boardId`, `columnId`, `cardId`, etc.) and checks the caller's membership role.
+
+- **ADMIN** — create/delete boards, invite/remove members, update roles, delete org
+- **MEMBER** — boards, columns, cards, activity, attachments
+
+Use `GET /memberships/me` to list org memberships for the current user.
+
+### Route overview
+
+| Area | Prefix / examples |
+|------|-------------------|
+| Health | `GET /health` |
+| Auth | `POST /auth/register`, `POST /auth/login`, `GET /auth/me` |
+| Memberships | `GET /memberships/me`, `GET /memberships/:orgId` |
+| Organizations | `POST /orgs`, `GET /orgs`, `GET /orgs/:orgId`, members, invite, … |
+| Boards | `POST/GET /orgs/:orgId/boards`, `GET/PATCH/DELETE /boards/:boardId` |
+| Columns | `POST/GET /boards/:boardId/columns`, reorder, update, delete |
+| Cards | `POST/GET /columns/:columnId/cards`, `GET/PATCH/DELETE /cards/:cardId`, move, attachments |
+| Activity | `GET /orgs/:orgId/activity`, `GET /cards/:cardId/activity` |
+| Notifications | `GET /notifications`, `PATCH /notifications/:id/read`, `PATCH /notifications/read-all` |
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `yarn start:dev` | Dev server with watch |
+| `yarn start:prod` | Run compiled build |
+| `yarn build` | Compile TypeScript |
+| `yarn lint` | ESLint |
+| `yarn test` | Unit tests |
+| `yarn test:e2e` | E2E tests |
+| `yarn test:cov` | Coverage |
+
+## Project layout
+
+```
+src/
+  auth/           JWT auth, register/login
+  orgs/           Organizations and members
+  boards/         Boards
+  columns/        Columns
+  cards/          Cards and attachments
+  activity-logs/  Audit trail
+  notifications/  In-app notifications
+  email/          BullMQ email queue
+  storage/        S3 uploads
+  common/         Guards, interceptors, shared utilities
+prisma/schema/    Split Prisma models
+postman/          Postman collection
+```
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+UNLICENSED — private project.

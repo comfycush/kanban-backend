@@ -5,6 +5,5 @@ model Organization {
 
   memberships Membership[]
   boards      Board[]
-  messages    Message[]
   activities  ActivityLog[]
 }
