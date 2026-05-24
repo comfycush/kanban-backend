@@ -1,6 +1,6 @@
 # Kanban Backend
 
-Multi-tenant Kanban API built with [NestJS](https://nestjs.com). Organizations, boards, columns, cards, org chat, activity logs, S3 attachments, in-app notifications, and a BullMQ email queue.
+Multi-tenant Kanban API built with [NestJS](https://nestjs.com). Organizations, boards, columns, cards, activity logs, S3 attachments, in-app notifications, and a BullMQ email queue.
 
 ## Features
 
@@ -8,7 +8,6 @@ Multi-tenant Kanban API built with [NestJS](https://nestjs.com). Organizations, 
 - **Organizations** — create orgs, invite members, role-based access (`ADMIN`, `MEMBER`)
 - **Boards & columns** — CRUD, column reorder
 - **Cards** — CRUD, move between columns, attachments (S3, max 20 MB)
-- **Messages** — org-scoped chat (paginated)
 - **Activity logs** — per org or per card
 - **Notifications** — in-app list, mark read
 - **Email queue** — BullMQ worker (stub; wire SMTP/SES in `EmailProcessor`)
@@ -115,7 +114,7 @@ List endpoints include `meta.pagination` with `page`, `limit`, `total`, and `tot
 Org-scoped routes use `RolesGuard`. The server resolves the organization from path params (`orgId`, `boardId`, `columnId`, `cardId`, etc.) and checks the caller's membership role.
 
 - **ADMIN** — create/delete boards, invite/remove members, update roles, delete org
-- **MEMBER** — boards, columns, cards, messages, activity, attachments
+- **MEMBER** — boards, columns, cards, activity, attachments
 
 Use `GET /memberships/me` to list org memberships for the current user.
 
@@ -130,7 +129,6 @@ Use `GET /memberships/me` to list org memberships for the current user.
 | Boards | `POST/GET /orgs/:orgId/boards`, `GET/PATCH/DELETE /boards/:boardId` |
 | Columns | `POST/GET /boards/:boardId/columns`, reorder, update, delete |
 | Cards | `POST/GET /columns/:columnId/cards`, `GET/PATCH/DELETE /cards/:cardId`, move, attachments |
-| Messages | `POST/GET /orgs/:orgId/messages` |
 | Activity | `GET /orgs/:orgId/activity`, `GET /cards/:cardId/activity` |
 | Notifications | `GET /notifications`, `PATCH /notifications/:id/read`, `PATCH /notifications/read-all` |
 
@@ -155,7 +153,6 @@ src/
   boards/         Boards
   columns/        Columns
   cards/          Cards and attachments
-  messages/       Org chat
   activity-logs/  Audit trail
   notifications/  In-app notifications
   email/          BullMQ email queue

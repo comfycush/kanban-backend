@@ -6,7 +6,6 @@ model User {
   createdAt    DateTime      @default(now())
 
   memberships  Membership[]
-  messages     Message[]
   notifications Notification[]
   activities   ActivityLog[]
   cards        Card[]

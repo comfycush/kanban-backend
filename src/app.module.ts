@@ -16,7 +16,6 @@ import { BoardsModule } from './boards/boards.module';
 import { ColumnsModule } from './columns/columns.module';
 import { CardsModule } from './cards/cards.module';
 import { ActivityLogsModule } from './activity-logs/activity-logs.module';
-import { MessagesModule } from './messages/messages.module';
 import { StorageModule } from './storage/storage.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { EmailModule } from './email/email.module';
@@ -36,7 +35,6 @@ import { RequestLoggerMiddleware } from './common/middleware/request-logger.midd
     ColumnsModule,
     CardsModule,
     ActivityLogsModule,
-    MessagesModule,
     StorageModule,
   ],
   controllers: [AppController],

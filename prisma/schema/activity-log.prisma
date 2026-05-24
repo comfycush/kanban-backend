@@ -2,7 +2,6 @@ enum ActivityType {
   CARD_CREATED
   CARD_MOVED
   CARD_UPDATED
-  MESSAGE_SENT
 }
 
 model ActivityLog {
