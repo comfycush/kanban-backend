@@ -651,52 +651,6 @@
       ]
     },
     {
-      "name": "Messages",
-      "item": [
-        {
-          "name": "Post message",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{accessToken}}", "type": "string" }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"content\": \"Hello team\"\n}"
-            },
-            "url": "{{baseUrl}}/orgs/{{orgId}}/messages"
-          }
-        },
-        {
-          "name": "List messages",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{accessToken}}", "type": "string" }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/orgs/{{orgId}}/messages?skip=0&take=50",
-              "query": [
-                { "key": "skip", "value": "0" },
-                { "key": "take", "value": "50" }
-              ]
-            },
-            "description": "Query: `skip` (default 0), `take` (1–100, default 50)."
-          }
-        }
-      ]
-    },
-    {
       "name": "Notifications",
       "item": [
         {

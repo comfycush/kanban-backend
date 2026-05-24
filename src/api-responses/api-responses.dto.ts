@@ -203,18 +203,6 @@ export class CardDetailResponseDto {
   attachments: AttachmentDto[];
 }
 
-// --- Message ---
-
-export class MessageWithUserDto {
-  @ApiProperty() id: string;
-  @ApiProperty() content: string;
-  @ApiProperty() userId: string;
-  @ApiProperty() orgId: string;
-  @ApiProperty() createdAt: Date;
-  @ApiProperty({ type: () => UserRefDto })
-  user: UserRefDto;
-}
-
 // --- Notification ---
 
 export class NotificationItemDto {
